@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F0F4FA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #FFFFFF;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+            width: 500px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+        }
+        p {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .options input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #357AE8;
+        }
+        .login-link {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .login-link a {
+            color: #4285F4;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .half-width {
+            display: inline-block;
+            width: 48%;
+        }
+        .password-strength {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="login-link">
+            <span>Already a Member?</span> <a href="/signin">Log In</a>
+        </div>
+        
+        <h2>Register</h2>
+
+        <!-- Display messages -->
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <strong>Message:</strong> {{ message }}
+            <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
+        </div>
+        {% endfor %}
+
+        <form action="/signup" method="POST">
+            {% csrf_token %}
+            
+            <div class="half-width">
+                <label for="fname">First Name</label>
+                <input type="text" id="fname" name="fname" placeholder="Enter your First Name">
+            </div>
+            <div class="half-width" style="float: right;">
+                <label for="lname">Last Name</label>
+                <input type="text" id="lname" name="lname" placeholder="Enter your Last Name">
+            </div>
+
+            <label for="email">E-mail</label>
+            <input type="email" id="email" name="email" placeholder="Enter your Email address">
+
+            <!-- <div class="options">
+                <div>
+                    <input type="checkbox" id="user" name="user">
+                    <label for="user">User</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="service_provider" name="service_provider">
+                    <label for="service_provider">Service provider</label>
+                </div>
+            </div> -->
+
+            <label for="username">User Name</label>
+            <input type="text" id="username" name="username" placeholder="Create a username">
+
+            <label for="pass1">Password</label>
+            <input type="password" id="pass1" name="pass1" placeholder="Create a Password">
+            
+           
+
+            <button type="submit">Register</button>
+        </form>
+
+      
+    </div>
+    
+</body>
+</html>
