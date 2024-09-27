@@ -80,3 +80,8 @@ def signout(request):
 def offer(request):
     
     return render(request, 'offer.html')
+
+
+def AboutUs(request):
+    return render(request, 'AboutUs.html')
+
