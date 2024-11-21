@@ -131,7 +131,7 @@ def offer_service(request):
         offered_service.save()
 
         # Redirect to a confirmation page or render a response
-        return HttpResponse("Service connected and offered successfully!, use bellow IP address for communication 192.168.100.112")
+        return HttpResponse("Service connected and offered successfully!, use the following IP address to publish the data 192.168.100.112")
 
     return render(request, 'services/offer.html')
 

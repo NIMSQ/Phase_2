@@ -7,7 +7,7 @@
 <div class="container">
     <h2>Offer a Service</h2>
     
-    <form action="/offer-service" method="POST">
+    <form action="{% url 'sensor:offer_service'%}" method="POST">
         {% csrf_token %}
         
         <div class="form-group">
