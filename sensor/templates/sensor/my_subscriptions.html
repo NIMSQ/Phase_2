@@ -1,0 +1,43 @@
+<!-- templates/sensor/my_subscriptions.html -->
+{% extends "base.html" %}
+
+{% block title %}My Subscriptions{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>My Subscriptions</h1>
+    {% for subscription in subscriptions %}
+        <div class="subscription-item">
+            <p><strong>Service:</strong> {{ subscription.service.service_type }}</p>
+            <p><strong>Description:</strong> {{ subscription.service.description }}</p>
+            <p><strong>Duration:</strong> {{ subscription.subscription_duration }}</p>
+            <p><strong>Interval Between Readings:</strong> {{ subscription.interval_between_readings }}</p>
+            
+            <!-- View Data Button -->
+            <form action="{% url 'sensor:user_temperature_data' %}" method="get">
+                <button type="submit" class="view-data-button">View Data</button>
+            </form>
+            
+            <hr>
+        </div>
+    {% endfor %}
+    {% if not subscriptions %}
+        <p>No subscriptions found.</p>
+    {% endif %}
+</div>
+
+<style>
+    .view-data-button {
+        margin-top: 10px;
+        padding: 8px 15px;
+        background-color: #4285F4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .view-data-button:hover {
+        background-color: #357AE8;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,66 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Website{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f4fa; margin: 0; padding-top: 60px; }
+        .navbar { 
+            width: 100%; 
+            position: fixed; 
+            top: 0; 
+            background-color: #4285F4; 
+            color: white; 
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 18px;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'sensor:service_list' %}">Available Services</a>
+            <a href="{% url 'sensor:my_subscriptions' %}">My Subscriptions</a>
+            <a href="{% url 'sensor:offer_service' %}">Offer a Service</a>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <span>Welcome {{ user.username }}!</span>
+                <a href="{% url 'signout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'signin' %}">Login</a>
+                <a href="{% url 'signup' %}">Sign Up</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

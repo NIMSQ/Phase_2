@@ -1,14 +1,15 @@
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError
-from django.contrib.auth import authenticate, login
 from Project import settings
 from django.core.mail import send_mail
-
-from django.shortcuts import render, redirect
-from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+
+
+
 def home(request):
     
     return render(request, 'index.html')
@@ -20,12 +21,12 @@ def signup(request):
         lname = request.POST['lname']
         email = request.POST['email']
         pass1 = request.POST['pass1']
-        pass2 = request.POST['pass2']
+        # pass2 = request.POST['pass2']
 
         # Check if passwords match
-        if pass1 != pass2:
-            messages.error(request, "Passwords do not match.")
-            return redirect('signup')
+        # if pass1 != pass2:
+        #     messages.error(request, "Passwords do not match.")
+        #     return redirect('signup')
 
         
         if User.objects.filter(username=username):
@@ -61,8 +62,8 @@ def signin(request):
         if user is not None:
             # Log in the user and redirect to home page with user's first name
             login(request, user)
-            fname = user.first_name
-            return render(request, 'index.html', {'fname': fname})
+            # fname = user.first_name
+            return HttpResponseRedirect(reverse('sensor:service_list'))
         
         else:
             # Error message for invalid credentials
@@ -77,9 +78,6 @@ def signout(request):
     return redirect('home')
 
 
-def offer(request):
-    
-    return render(request, 'offer.html')
 
 
 def AboutUs(request):

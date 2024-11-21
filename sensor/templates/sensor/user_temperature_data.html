@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}User Temperature Data{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Temperature Data for {{ request.user.username }}</h1>
+    {% if temperature_data %}
+        <p class="data">Current Temperature: {{ temperature_data.data }} °C</p>
+        <p class="data">Max Temperature: {{ max_temperature }} °C</p>
+        <p class="data">Min Temperature: {{ min_temperature }} °C</p>
+        <p class="data">Average Temperature: {{ avg_temperature|floatformat:1 }} °C</p>
+        <p class="timestamp">Last updated: {{ adjusted_timestamp|date:"F j, Y, g:i a" }}</p>
+    {% else %}
+        <p>No temperature data available.</p>
+    {% endif %}
+</div>
+{% endblock %}
