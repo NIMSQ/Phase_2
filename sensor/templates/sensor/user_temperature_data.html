@@ -1,18 +1,257 @@
-{% extends "base.html" %}
-
-{% block title %}User Temperature Data{% endblock %}
+<html>
+{% block title %}{% endblock %}
 
 {% block content %}
+
 <div class="container">
-    <h1>Temperature Data for {{ request.user.username }}</h1>
-    {% if temperature_data %}
-        <p class="data">Current Temperature: {{ temperature_data.data }} °C</p>
-        <p class="data">Max Temperature: {{ max_temperature }} °C</p>
-        <p class="data">Min Temperature: {{ min_temperature }} °C</p>
-        <p class="data">Average Temperature: {{ avg_temperature|floatformat:1 }} °C</p>
-        <p class="timestamp">Last updated: {{ adjusted_timestamp|date:"F j, Y, g:i a" }}</p>
-    {% else %}
-        <p>No temperature data available.</p>
-    {% endif %}
+    
+    <h1>Temperature and Humidity Data for {{ request.user.username }}</h1>
+    
+
+    <!-- Toggle Button -->
+    <button id="toggle-view" class="toggle-button">Switch to Chart view</button>
+    
+    <!-- Table View -->
+    <div id="table-view">
+        {% if adjusted_data %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Temperature (°C)</th>
+                        <th>Humidity (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in adjusted_data %}
+                    <tr>
+                        <td>{{ data.date }}</td>
+                        <td>{{ data.time|time:"g:i a" }}</td>
+                        <td>{{ data.temperature }}</td>
+                        <td>{{ data.humidity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No temperature and humidity data available.</p>
+        {% endif %}
+    </div>
+    
+
+    <!-- Chart View -->
+    <div id="chart-view" style="display: none;">
+        <canvas id="dataChart"></canvas>
+    </div>
+    <div class="filter-section">
+        <h2>Filter Data</h2>
+        <form method="GET" action="">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+    
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+    
+            <button type="submit" class="filter-button">Filter</button>
+        </form>
+    </div>
+    
+
+    <!-- Statistics Section -->
+    <div id="statistics" class="statistics">
+        <h2>Statistics</h2>
+        <p><strong>Max Temperature:</strong> {{ max_temperature }} °C</p>
+        <p><strong>Min Temperature:</strong> {{ min_temperature }} °C</p>
+        <p><strong>Average Temperature:</strong> {{ avg_temperature|floatformat:2 }} °C</p>
+        <p><strong>Max Humidity:</strong> {{ max_humidity }} %</p>
+        <p><strong>Min Humidity:</strong> {{ min_humidity }} %</p>
+        <p><strong>Average Humidity:</strong> {{ avg_humidity|floatformat:2 }} %</p>
+    </div>
+ 
+    
+    <div class="download-section">
+    <a href="{% url 'sensor:download_data' %}" class="download-button">Download Data as Excel</a>
+</div>
+
+
+    <style>
+        .download-section {
+            margin-top: 20px;
+        }
+        .download-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .download-button:hover {
+            background-color: #45a049;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .filter-section label {
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        .filter-section input {
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .filter-button {
+            padding: 8px 15px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .filter-button:hover {
+            background-color: #357AE8;
+        }
+    </style>
+    
 </div>
 {% endblock %}
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    table th, table td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: left;
+    }
+    table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+    table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .toggle-button {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #4285F4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .toggle-button:hover {
+        background-color: #357AE8;
+    }
+    .statistics {
+        margin-top: 20px;
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .statistics p {
+        font-size: 16px;
+        margin: 5px 0;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("JavaScript is loading...");
+
+        const toggleButton = document.getElementById('toggle-view');
+        const tableView = document.getElementById('table-view');
+        const chartView = document.getElementById('chart-view');
+        const ctx = document.getElementById('dataChart').getContext('2d');
+
+        let chart; // To store the chart instance
+
+        toggleButton.addEventListener('click', async () => {
+            console.log("Button clicked! Sending AJAX request...");
+        
+            if (tableView.style.display === 'none') {
+                tableView.style.display = '';
+                chartView.style.display = 'none';
+                toggleButton.textContent = 'Switch to Chart View';
+            } else {
+                if (!chart) {
+                    try {
+                        console.log("Sending AJAX request...");
+                        const response = await fetch(window.location.href, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+        
+                        const result = await response.json();
+                        console.log("Response received", result);
+        
+                        const labels = result.data.map(item => item.date + ' ' + item.time);
+                        const temperatures = result.data.map(item => item.temperature);
+                        const humidities = result.data.map(item => item.humidity);
+        
+                        // Initialize the chart
+                        chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Temperature (°C)',
+                                        data: temperatures,
+                                        borderColor: 'rgba(255, 99, 132, 1)',
+                                        borderWidth: 2,
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Humidity (%)',
+                                        data: humidities,
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                        borderWidth: 2,
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    x: { title: { display: true, text: 'Time' } },
+                                    y: { title: { display: true, text: 'Value' } }
+                                }
+                            }
+                        });
+                    } catch (error) {
+                        console.error('Error fetching or displaying chart data:', error);
+                    }
+                }
+        
+                tableView.style.display = 'none';
+                chartView.style.display = '';
+                toggleButton.textContent = 'Switch to Table View';
+            }
+        });
+    });
+</script>
+</html>

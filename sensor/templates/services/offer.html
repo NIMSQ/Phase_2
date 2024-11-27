@@ -1,84 +1,191 @@
-<!-- templates/offer_service.html -->
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer a Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
 
-{% block title %}Offer a Service{% endblock %}
+        /* Navbar styling */
+        .navbar {
+            background-color: #4285F4;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
 
-{% block content %}
-<div class="container">
-    <h2>Offer a Service</h2>
-    
-    <form action="{% url 'sensor:offer_service'%}" method="POST">
-        {% csrf_token %}
-        
-        <div class="form-group">
-            <label for="service-type">Service Type</label>
-            <input type="text" id="service-type" name="service_type" placeholder="Enter service type (e.g., Temperature Monitoring)">
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            {% comment %} font-weight: bold; {% endcomment %}
+        }
+
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+
+        .navbar .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #map {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4285F4;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #357AE8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'sensor:service_list' %}">Available Services</a>
+            <a href="{% url 'sensor:my_subscriptions' %}">My Subscriptions</a>
         </div>
-
-        <div class="form-group">
-            <label for="service-description">Service Description</label>
-            <input type="text" id="service-description" name="service_description" placeholder="Enter a description of the service">
+        <div>
+            {% if user.is_authenticated %}
+                <span>Welcome {{ user.username }}</span>
+                <a href="{% url 'signout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'signin' %}">Login</a>
+                <a href="{% url 'signup' %}">Sign Up</a>
+            {% endif %}
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="price">Subscription Price (Monthly)</label>
-            <div class="price-icon">
-                <span>$</span>
-                <input type="number" id="price" name="price" placeholder="Set a price for the service">
+    <!-- Form Section -->
+    <div class="form-container">
+        <h1>Offer a Service</h1>
+        <form action="{% url 'sensor:offer_service'%}" method="POST">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            
+            <div class="form-group">
+                <label for="service-type">Service Type</label>
+                <input type="text" id="service-type" name="service_type" placeholder="Enter service type">
             </div>
-        </div>
 
-        <button type="submit">Connect and Offer Service</button>
-    </form>
-</div>
+            <div class="form-group">
+                <label for="service-description">Service Description</label>
+                <input type="text" id="service-description" name="service_description" placeholder="Enter service description">
+            </div>
 
-<style>
-    .form-group {
-        margin-bottom: 15px;
-    }
-    
-    .form-group label {
-        display: block;
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 5px;
-    }
-    
-    .form-group input[type="text"],
-    .form-group input[type="number"] {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-    }
+            <div class="form-group">
+                <label for="price">Subscription Price (Monthly)</label>
+                <input type="number" id="price" name="price" placeholder="Set a price">
+            </div>
 
-    .price-icon {
-        display: flex;
-        align-items: center;
-    }
+            <div class="form-group">
+                <label for="location">Select Device Location</label>
+                <div id="map"></div>
+                <input type="hidden" id="latitude" name="latitude">
+                <input type="hidden" id="longitude" name="longitude">
+            </div>
 
-    .price-icon span {
-        padding: 10px;
-        background-color: #ccc;
-        border-radius: 4px 0 0 4px;
-        margin-right: -1px;
-    }
+            <button type="submit" class="submit-button">Offer Service</button>
+        </form>
+    </div>
 
-    button {
-        width: 100%;
-        padding: 10px;
-        background-color: #4285F4;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 10px;
-        font-size: 16px;
-    }
+    <script>
+        let map;
+        let marker;
 
-    button:hover {
-        background-color: #357AE8;
-    }
-</style>
-{% endblock %}
+        function initMap() {
+            // Set the default location to Riyadh
+            const defaultLocation = { lat: 24.7136, lng: 46.6753 };
+
+            // Initialize the map centered on Riyadh
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: defaultLocation,
+            });
+
+            // Place a marker at the default location
+            marker = new google.maps.Marker({
+                position: defaultLocation,
+                map: map,
+                draggable: true, // Allow marker dragging
+            });
+
+            // Update hidden fields whenever the marker is dragged
+            google.maps.event.addListener(marker, "dragend", function () {
+                document.getElementById("latitude").value = marker.getPosition().lat();
+                document.getElementById("longitude").value = marker.getPosition().lng();
+            });
+
+            // Set initial values for the latitude and longitude inputs
+            document.getElementById("latitude").value = defaultLocation.lat;
+            document.getElementById("longitude").value = defaultLocation.lng;
+        }
+    </script>
+
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCR4JZ-brTUC8qqvM9ggr6x0Ucr35ns4yw&callback=initMap">
+    </script>
+</body>
+</html>

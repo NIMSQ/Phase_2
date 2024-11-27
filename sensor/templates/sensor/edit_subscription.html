@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Subscription{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Edit Subscription</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="subscription_duration">Subscription Duration</label>
+            <input type="text" id="subscription_duration" name="subscription_duration" value="{{ subscription.subscription_duration }}" required>
+        </div>
+        <div class="form-group">
+            <label for="interval_between_readings">Interval Between Readings</label>
+            <input type="text" id="interval_between_readings" name="interval_between_readings" value="{{ subscription.interval_between_readings }}" required>
+        </div>
+        <button type="submit" class="save-button">Save Changes</button>
+        <a href="{% url 'sensor:my_subscriptions' %}" class="cancel-button">Cancel</a>
+    </form>
+</div>
+
+<style>
+    .save-button {
+        padding: 10px 20px;
+        background-color: #4285F4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .save-button:hover {
+        background-color: #357AE8;
+    }
+
+    .cancel-button {
+        padding: 10px 20px;
+        background-color: #CCCCCC;
+        color: black;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-left: 10px;
+    }
+
+    .cancel-button:hover {
+        background-color: #AAAAAA;
+    }
+</style>
+{% endblock %}

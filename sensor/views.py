@@ -9,7 +9,37 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Max, Min, Avg
+from django.http import JsonResponse
+from django.http import HttpResponseForbidden
+import pandas as pd
+from math import radians, cos, sin, sqrt, atan2
 
+
+def download_data(request):
+    # Fetch data for the logged-in user
+    temperature_data = TemperatureData.objects.filter(user=request.user).order_by('timestamp')
+    
+    # Prepare data for the Excel file
+    data = [
+        {
+            'Date': (record.timestamp + timedelta(hours=3)).date(),
+            'Time': (record.timestamp + timedelta(hours=3)).time(),
+            'Temperature (°C)': record.temperature,
+            'Humidity (%)': record.humidity,
+        }
+        for record in temperature_data
+    ]
+
+    # Convert data to a DataFrame
+    df = pd.DataFrame(data)
+
+    # Create the Excel file in memory
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=temperature_data.xlsx'
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Temperature Data')
+
+    return response
 
 
 @login_required
@@ -52,7 +82,6 @@ def send_mqtt_notification(user_id, interval, duration, topic):
 @login_required
 def subscribe(request, service_id):
     if request.method == 'POST':
-        print("Processing subscription...")
         subscription_duration = request.POST.get('subscription_duration')
         interval_between_readings = request.POST.get('interval_between_readings')
         user = request.user
@@ -66,9 +95,8 @@ def subscribe(request, service_id):
             subscription_duration=subscription_duration,
             interval_between_readings=interval_between_readings
         )
-        print("Subscription created in the database.")
-
-        user_topic = f"sensor/{user.id}/temperature"
+        
+        user_topic = f"sensor/{user.id}/data"
         
         # Send MQTT notification
         send_mqtt_notification(
@@ -79,64 +107,196 @@ def subscribe(request, service_id):
         )
 
         # Add a success message for user feedback
-        messages.success(request, "You have successfully subscribed to the service.")
-        print("Subscription success message set.")
+        # messages.success(request, "You have successfully subscribed to the service.")
         
-        return redirect('sensor:service_list')
+        return redirect('sensor:my_subscriptions')
 
     print("Redirecting back to service list without subscribing.")
     return redirect('sensor:service_list')
 
+
+def send_mqtt_edit_notification(topic, message):
+    """Sends an MQTT message to notify about a subscription update."""
+    mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
+    mqtt_port = 1883
+    client = mqtt.Client()
+    
+    try:
+        print("Attempting to connect to MQTT broker...")
+        client.connect(mqtt_broker, mqtt_port, 60)
+        print("Connected to MQTT broker.")
+        
+        # Log the topic and message
+        print(f"Publishing to topic: {topic}")
+        print(f"Message: {message}")
+        
+        # Publish the message
+        client.publish(topic, message)
+        print("Message published successfully.")
+    except Exception as e:
+        print(f"Failed to send MQTT message: {e}")
+    finally:
+        # Disconnect after publishing
+        client.disconnect()
+        print("Disconnected from MQTT broker.")
+
+def edit_subscription(request, subscription_id):
+    """Allows the user to edit an existing subscription and notifies the service provider."""
+    subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
+
+    if request.method == 'POST':
+        # Get the old values for comparison
+        old_duration = subscription.subscription_duration
+        old_interval = subscription.interval_between_readings
+
+        # Update subscription details from form data
+        subscription.subscription_duration = request.POST.get('subscription_duration')
+        subscription.interval_between_readings = request.POST.get('interval_between_readings')
+        subscription.save()
+
+        # If the subscription details have changed, notify the service provider
+        if old_duration != subscription.subscription_duration or old_interval != subscription.interval_between_readings:
+            service_provider_topic = "sensor/subscriptions"
+            message = (
+                f"User {request.user.id} has updated their subscription:\n"
+                f"- Service: {subscription.service.service_type}\n"
+                f"- New Duration: {subscription.subscription_duration}\n"
+                f"- New Interval: {subscription.interval_between_readings}\n"
+                f"- please Publish the data to: sensor/{request.user.id}/data"
+            )
+            # Send the MQTT message to the service provider
+            send_mqtt_edit_notification(topic=service_provider_topic, message=message)
+
+        return redirect('sensor:my_subscriptions')
+
+    # Render the edit form with current subscription details
+    return render(request, 'sensor/edit_subscription.html', {'subscription': subscription})
+
+
+def delete_subscription(request, subscription_id):
+    subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
+    subscription.delete()
+    return redirect('sensor:my_subscriptions')
+
 @login_required
 def user_temperature_data(request):
-    # Get the latest temperature data for the current user
-    temperature_data = TemperatureData.objects.filter(user=request.user).order_by('-timestamp').first()
+    # Get filter parameters from the request
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
 
-    # Calculate max, min, and average temperatures for the user
-    max_temperature = TemperatureData.objects.filter(user=request.user).aggregate(Max('data'))['data__max']
-    min_temperature = TemperatureData.objects.filter(user=request.user).aggregate(Min('data'))['data__min']
-    avg_temperature = TemperatureData.objects.filter(user=request.user).aggregate(Avg('data'))['data__avg']
+    # Filter data based on the date range if provided
+    temperature_data = TemperatureData.objects.filter(user=request.user).order_by('timestamp')
 
-    # Adjust the timestamp by adding 3 hours if data is available
-    adjusted_timestamp = None
-    if temperature_data:
-        adjusted_timestamp = temperature_data.timestamp + timedelta(hours=3)
+    if start_date:
+        temperature_data = temperature_data.filter(timestamp__date__gte=start_date)
+    if end_date:
+        temperature_data = temperature_data.filter(timestamp__date__lte=end_date)
+
+    # Calculate statistics
+    max_temperature = temperature_data.aggregate(Max('temperature'))['temperature__max']
+    min_temperature = temperature_data.aggregate(Min('temperature'))['temperature__min']
+    avg_temperature = temperature_data.aggregate(Avg('temperature'))['temperature__avg']
+    max_humidity = temperature_data.aggregate(Max('humidity'))['humidity__max']
+    min_humidity = temperature_data.aggregate(Min('humidity'))['humidity__min']
+    avg_humidity = temperature_data.aggregate(Avg('humidity'))['humidity__avg']
+
+    # Adjust data for table
+    adjusted_data = [
+        {
+            'date': (entry.timestamp + timedelta(hours=3)).date(),
+            'time': (entry.timestamp + timedelta(hours=3)).time(),
+            'temperature': entry.temperature,
+            'humidity': entry.humidity,
+        }
+        for entry in temperature_data
+    ]
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'data': adjusted_data})
 
     context = {
-        'temperature_data': temperature_data,
-        'adjusted_timestamp': adjusted_timestamp,
+        'adjusted_data': adjusted_data,
         'max_temperature': max_temperature,
         'min_temperature': min_temperature,
         'avg_temperature': avg_temperature,
+        'max_humidity': max_humidity,
+        'min_humidity': min_humidity,
+        'avg_humidity': avg_humidity,
     }
-
     return render(request, 'sensor/user_temperature_data.html', context)
 
 
 
-#I did not understand this function
 def offer_service(request):
     if request.method == 'POST':
-        # Retrieve form data
         service_type = request.POST.get('service_type')
         service_description = request.POST.get('service_description')
         price = request.POST.get('price')
-        
-        # Save the service to the database
-        offered_service = OfferedService(
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+
+        # Save the service with location data
+        new_service = OfferedService.objects.create(
             service_type=service_type,
             description=service_description,
             price=price,
+            latitude=latitude,
+            longitude=longitude
         )
-        offered_service.save()
 
-        # Redirect to a confirmation page or render a response
-        return HttpResponse("Service connected and offered successfully!, use the following IP address to publish the data 192.168.100.112")
+        # Render a confirmation page with the details
+        context = {
+            'service_type': service_type,
+            'service_description': service_description,
+            'price': price,
+            'latitude': latitude,
+            'longitude': longitude,
+            'publish_topic': f"sensor/subscriber_id/data"
+        }
+        return render(request, 'services/offer_success.html', context)
 
     return render(request, 'services/offer.html')
 
 
 
+
+def haversine(lat1, lon1, lat2, lon2):
+    # Convert database Decimal values to float
+    lat2 = float(lat2)
+    lon2 = float(lon2)
+    
+    # Calculate the great-circle distance between two points on the Earth
+    R = 6371  # Radius of the Earth in km
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+
 def service_list(request):
-    services = OfferedService.objects.all()  # Retrieve all services
+    services = OfferedService.objects.all()
+    latitude = request.GET.get("latitude")
+    longitude = request.GET.get("longitude")
+    min_price = request.GET.get("min_price")
+    max_price = request.GET.get("max_price")
+    radius = 10  # Default radius in km
+
+    if latitude and longitude:
+        latitude = float(latitude)
+        longitude = float(longitude)
+
+        # Filter by location
+        filtered_services = []
+        for service in services:
+            distance = haversine(latitude, longitude, service.latitude, service.longitude)
+            if distance <= radius:
+                filtered_services.append(service)
+        services = filtered_services
+
+    # Filter by price range
+    if min_price:
+        services = [service for service in services if service.price >= float(min_price)]
+    if max_price:
+        services = [service for service in services if service.price <= float(max_price)]
+
     return render(request, 'sensor/service_list.html', {'services': services})

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Offered</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f8fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        p {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .info-box {
+            padding: 15px;
+            border-left: 5px solid #4285F4;
+            margin: 20px 0;
+        }
+        .info-box p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .back-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+            max-width: 300px;
+        }
+        .back-button:hover {
+            background-color: #357AE8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Service Offered Successfully!</h1>
+        <p>Thank you for offering your service. Below are the details:</p>
+        
+        <div class="info-box">
+            <p><strong>Service Type:</strong> {{ service_type }}</p>
+            <p><strong>Description:</strong> {{ service_description }}</p>
+            <p><strong>Price:</strong> ${{ price }}</p>
+            {% comment %} <p><strong>Location:</strong> Latitude: {{ latitude }}, Longitude: {{ longitude }}</p> {% endcomment %}
+            <p><strong>MQTT Broker IP:</strong> 192.168.100.112</p>
+            <p><strong>MQTT Port:</strong> 1883</p>
+            <p><strong>MQTT Publish Topic:</strong> {{ publish_topic }}</p>
+        </div>
+
+        {% comment %} <div class="info-box">
+            <p>To publish data, send MQTT messages to the broker:</p>
+            <p><strong>Topic:</strong> {{ publish_topic }}</p>
+            <p>Example payload:</p>
+            <code>{ "temperature": 22.5, "humidity": 60 }</code>
+        </div> {% endcomment %}
+
+        <a href="{% url 'sensor:service_list' %}" class="back-button">Back to Available Services</a>
+    </div>
+</body>
+</html>
