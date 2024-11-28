@@ -16,9 +16,12 @@ from math import radians, cos, sin, sqrt, atan2
 
 
 def download_data(request):
-    # Fetch data for the logged-in user
-    temperature_data = TemperatureData.objects.filter(user=request.user).order_by('timestamp')
-    
+   
+
+    # Fetch data for subscriptions of the logged-in user
+    subscriptions = Subscription.objects.filter(user=request.user)
+    temperature_data = TemperatureData.objects.filter(subscription__in=subscriptions).order_by('timestamp')
+
     # Prepare data for the Excel file
     data = [
         {
@@ -52,32 +55,32 @@ def my_subscriptions(request):
 
 
 
-def send_mqtt_notification(user_id, interval, duration, topic):
-    """Sends an MQTT message to notify about a new subscription."""
-    mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
-    mqtt_port = 1883
-    client = mqtt.Client()
+# def send_mqtt_notification(user_id, interval, duration, topic):
+#     """Sends an MQTT message to notify about a new subscription."""
+#     mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
+#     mqtt_port = 1883
+#     client = mqtt.Client()
     
-    # Attempt connection with logging
-    try:
-        print("Attempting to connect to MQTT broker...")
-        client.connect(mqtt_broker, mqtt_port, 60)
-        print("Connected to MQTT broker.")
+#     # Attempt connection with logging
+#     try:
+#         print("Attempting to connect to MQTT broker...")
+#         client.connect(mqtt_broker, mqtt_port, 60)
+#         print("Connected to MQTT broker.")
         
-        # Construct the message
-        message = f"You have a new subscriber with user ID {user_id}. Publish the data every {interval} for {duration} to this topic {topic}."
-        print(f"Publishing message: {message}")
+#         # Construct the message
+#         message = f"You have a new subscriber with user ID {user_id}. Publish the data every {interval} for {duration} to this topic {topic}."
+#         print(f"Publishing message: {message}")
         
-        # Publish the message
-        client.publish("sensor/subscriptions", message)
-        print("Message published successfully.")
+#         # Publish the message
+#         client.publish("sensor/subscriptions", message)
+#         print("Message published successfully.")
         
-    except Exception as e:
-        print(f"Failed to send MQTT message: {e}")
-    finally:
-        # Disconnect after publishing
-        client.disconnect()
-        print("Disconnected from MQTT broker.")
+#     except Exception as e:
+#         print(f"Failed to send MQTT message: {e}")
+#     finally:
+#         # Disconnect after publishing
+#         client.disconnect()
+#         print("Disconnected from MQTT broker.")
         
 @login_required
 def subscribe(request, service_id):
@@ -95,50 +98,50 @@ def subscribe(request, service_id):
             subscription_duration=subscription_duration,
             interval_between_readings=interval_between_readings
         )
-        
-        user_topic = f"sensor/{user.id}/data"
+
+        # user_topic = f"sensor/{user.id}/data"
         
         # Send MQTT notification
-        send_mqtt_notification(
-            user_id=user.id,
-            interval=interval_between_readings,
-            duration=subscription_duration,
-            topic=user_topic
-        )
+        # send_mqtt_notification(
+        #     user_id=user.id,
+        #     interval=interval_between_readings,
+        #     duration=subscription_duration,
+        #     topic=user_topic
+        # )
 
         # Add a success message for user feedback
         # messages.success(request, "You have successfully subscribed to the service.")
         
-        return redirect('sensor:my_subscriptions')
+        return redirect('sensor:my_subscriptions') #--> this line is the error 
 
     print("Redirecting back to service list without subscribing.")
     return redirect('sensor:service_list')
 
 
-def send_mqtt_edit_notification(topic, message):
-    """Sends an MQTT message to notify about a subscription update."""
-    mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
-    mqtt_port = 1883
-    client = mqtt.Client()
+# def send_mqtt_edit_notification(topic, message):
+#     """Sends an MQTT message to notify about a subscription update."""
+#     mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
+#     mqtt_port = 1883
+#     client = mqtt.Client()
     
-    try:
-        print("Attempting to connect to MQTT broker...")
-        client.connect(mqtt_broker, mqtt_port, 60)
-        print("Connected to MQTT broker.")
+#     try:
+#         print("Attempting to connect to MQTT broker...")
+#         client.connect(mqtt_broker, mqtt_port, 60)
+#         print("Connected to MQTT broker.")
         
-        # Log the topic and message
-        print(f"Publishing to topic: {topic}")
-        print(f"Message: {message}")
+#         # Log the topic and message
+#         print(f"Publishing to topic: {topic}")
+#         print(f"Message: {message}")
         
-        # Publish the message
-        client.publish(topic, message)
-        print("Message published successfully.")
-    except Exception as e:
-        print(f"Failed to send MQTT message: {e}")
-    finally:
-        # Disconnect after publishing
-        client.disconnect()
-        print("Disconnected from MQTT broker.")
+#         # Publish the message
+#         client.publish(topic, message)
+#         print("Message published successfully.")
+#     except Exception as e:
+#         print(f"Failed to send MQTT message: {e}")
+#     finally:
+#         # Disconnect after publishing
+#         client.disconnect()
+#         print("Disconnected from MQTT broker.")
 
 def edit_subscription(request, subscription_id):
     """Allows the user to edit an existing subscription and notifies the service provider."""
@@ -165,7 +168,7 @@ def edit_subscription(request, subscription_id):
                 f"- please Publish the data to: sensor/{request.user.id}/data"
             )
             # Send the MQTT message to the service provider
-            send_mqtt_edit_notification(topic=service_provider_topic, message=message)
+            # send_mqtt_edit_notification(topic=service_provider_topic, message=message)
 
         return redirect('sensor:my_subscriptions')
 
@@ -178,14 +181,18 @@ def delete_subscription(request, subscription_id):
     subscription.delete()
     return redirect('sensor:my_subscriptions')
 
+
+
 @login_required
-def user_temperature_data(request):
-    # Get filter parameters from the request
+def user_temperature_data(request, subscription_id):
+    subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
+
+    # Get filter parameters
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
-    # Filter data based on the date range if provided
-    temperature_data = TemperatureData.objects.filter(user=request.user).order_by('timestamp')
+    # Filter data for this subscription
+    temperature_data = TemperatureData.objects.filter(subscription=subscription).order_by('timestamp')
 
     if start_date:
         temperature_data = temperature_data.filter(timestamp__date__gte=start_date)
@@ -210,11 +217,11 @@ def user_temperature_data(request):
         }
         for entry in temperature_data
     ]
-
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'data': adjusted_data})
 
     context = {
+        'subscription': subscription,
         'adjusted_data': adjusted_data,
         'max_temperature': max_temperature,
         'min_temperature': min_temperature,
@@ -251,7 +258,7 @@ def offer_service(request):
             'price': price,
             'latitude': latitude,
             'longitude': longitude,
-            'publish_topic': f"sensor/subscriber_id/data"
+            'publish_topic': f"sensor/{new_service.id}/data"  # Include the service ID
         }
         return render(request, 'services/offer_success.html', context)
 

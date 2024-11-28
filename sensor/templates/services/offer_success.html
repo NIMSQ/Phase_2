@@ -71,12 +71,7 @@
             <p><strong>MQTT Publish Topic:</strong> {{ publish_topic }}</p>
         </div>
 
-        {% comment %} <div class="info-box">
-            <p>To publish data, send MQTT messages to the broker:</p>
-            <p><strong>Topic:</strong> {{ publish_topic }}</p>
-            <p>Example payload:</p>
-            <code>{ "temperature": 22.5, "humidity": 60 }</code>
-        </div> {% endcomment %}
+       
 
         <a href="{% url 'sensor:service_list' %}" class="back-button">Back to Available Services</a>
     </div>

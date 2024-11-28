@@ -193,30 +193,57 @@
             <div class="service-item">
                 <p class="service-title">{{ service.service_type }}</p>
                 <p class="service-description">{{ service.description }}</p>
-                <p class="service-price">Price: ${{ service.price }} (per one Read)</p>
+                <p class="service-price" id="service-price-{{ service.id }}">Price: ${{ service.price }}(for 1 Reading)</p>
                 <button class="subscribe-button" onclick="toggleForm('{{ service.id }}')">Subscribe</button>
                 
                 <!-- Subscription Form -->
                 <div id="form-{{ service.id }}" class="subscribe-form">
                     <form method="POST" action="{% url 'sensor:subscribe' service.id %}">
                         {% csrf_token %}
-                        <label for="subscription_duration">number of readings</label>
-                        <input type="text" name="subscription_duration" placeholder="Enter number of readings">
-
-                        <label for="interval_between_readings">Interval (e.g., 1 hour):</label>
+                        <label for="subscription_duration">Number of Readings:</label>
+                        <input 
+                            type="number" 
+                            name="subscription_duration" 
+                            placeholder="Enter number of readings"
+                            id="readings-{{ service.id }}"
+                            min="1"
+                            onchange="updatePrice({{ service.id }}, {{ service.price }})"
+                        >
+        
+                        <label for="interval_between_readings">Interval between readings(e.g., 1 hour):</label>
                         <input type="text" name="interval_between_readings" placeholder="Enter interval">
-
+        
                         <button type="submit" class="form-button">Confirm Subscription</button>
                     </form>
                 </div>
             </div>
             {% endfor %}
         </div>
-
+        
         {% if not services %}
         <p>No services available within the selected criteria.</p>
         {% endif %}
-    </div>
+        
+        <script>
+            function toggleForm(serviceId) {
+                const form = document.getElementById(`form-${serviceId}`);
+                form.style.display = form.style.display === "block" ? "none" : "block";
+            }
+        
+            function updatePrice(serviceId, pricePerReading) {
+                const readingsInput = document.getElementById(`readings-${serviceId}`);
+                const totalPriceElement = document.getElementById(`service-price-${serviceId}`);
+                const numberOfReadings = parseInt(readingsInput.value, 10);
+        
+                if (numberOfReadings >= 1) {
+                    const totalPrice = numberOfReadings * pricePerReading;
+                    totalPriceElement.textContent = `Price: $${totalPrice} (for ${numberOfReadings} readings)`;
+                } else {
+                    totalPriceElement.textContent = `Price: $${pricePerReading} (per one Read)`;
+                }
+            }
+        </script>
+        
 
     <script>
         function toggleForm(serviceId) {

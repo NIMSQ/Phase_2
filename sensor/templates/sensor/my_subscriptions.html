@@ -1,20 +1,133 @@
-{% extends "base.html" %}
+<html>
+<head>
+    <title>My Subscriptions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4fa;
+            margin: 0;
+            padding-top: 60px;
+        }
 
-{% block title %}My Subscriptions{% endblock %}
+        .navbar {
+            background-color: #4285F4;
+            color: white;
+            padding: 15px 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
 
-{% block content %}
-<div class="container">
-    <h1>My Subscriptions</h1>
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
 
-    {% for subscription in subscriptions %}
+        .view-data-button,
+        .edit-button,
+        .delete-button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .view-data-button {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        .view-data-button:hover {
+            background-color: #357AE8;
+        }
+
+        .edit-button {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        .edit-button:hover {
+            background-color: #357AE8;
+        }
+
+        .delete-button {
+            background-color: #FF4D4D;
+            color: white;
+        }
+
+        .delete-button:hover {
+            background-color: #E60000;
+        }
+
+        .subscription-item {
+            margin-bottom: 20px;
+            padding: 10px;
+            {% comment %} border: 1px solid #ccc; {% endcomment %}
+            {% comment %} border-radius: 8px; {% endcomment %}
+            {% comment %} background-color: #f9f9f9; {% endcomment %}
+        }
+
+        .subscription-item p {
+            margin: 5px 0;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div>
+            <a href="{% url 'home' %}">Home</a>
+            <a href="{% url 'sensor:service_list' %}">Available Services</a>
+            <a href="{% url 'sensor:offer_service' %}">Offer a Service</a>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <span>Welcome {{ user.username }}</span>
+                <a href="{% url 'signout' %}">Logout</a>
+            {% else %}
+                <a href="{% url 'signin' %}">Login</a>
+                <a href="{% url 'signup' %}">Sign Up</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Subscriptions Section -->
+    <div class="container">
+        <h1>My Subscriptions</h1>
+
+        {% for subscription in subscriptions %}
         <div class="subscription-item">
             <p><strong>Service:</strong> {{ subscription.service.service_type }}</p>
             <p><strong>Description:</strong> {{ subscription.service.description }}</p>
-            <p><strong>Duration:</strong> {{ subscription.subscription_duration }}</p>
+            <p><strong>number of reading:</strong> {{ subscription.subscription_duration }}</p>
             <p><strong>Interval Between Readings:</strong> {{ subscription.interval_between_readings }}</p>
             
             <!-- View Data Button -->
-            <form action="{% url 'sensor:user_temperature_data' %}" method="get" style="display: inline-block;">
+            <form action="{% url 'sensor:user_temperature_data' subscription.id %}" method="get" style="display: inline-block;">
                 <button type="submit" class="view-data-button">View Data</button>
             </form>
 
@@ -28,49 +141,13 @@
                 {% csrf_token %}
                 <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this subscription?');">Delete</button>
             </form>
-
-            <hr>
         </div>
-    {% endfor %}
-    {% if not subscriptions %}
-        <p>No subscriptions found.</p>
-    {% endif %}
-</div>
+        <hr>
+        {% endfor %}
 
-<style>
-    .view-data-button,
-    .edit-button,
-    .delete-button {
-        margin-top: 10px;
-        padding: 8px 15px;
-        font-size: 14px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    .view-data-button {
-        background-color: #4285F4;
-        color: white;
-    }
-    .view-data-button:hover {
-        background-color: #357AE8;
-    }
-
-    .edit-button {
-        background-color: #4285F4;
-        color: white;
-    }
-    .edit-button:hover {
-        background-color: #4285F4;
-    }
-
-    .delete-button {
-        background-color: #FF4D4D;
-        color: white;
-    }
-    .delete-button:hover {
-        background-color: #E60000;
-    }
-</style>
-{% endblock %}
+        {% if not subscriptions %}
+            <p>No subscriptions found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

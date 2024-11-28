@@ -4,7 +4,7 @@ from . import views
 
 app_name = 'sensor'
 urlpatterns = [
-path('temperature/', views.user_temperature_data, name='user_temperature_data'),
+path('temperature/<int:subscription_id>/', views.user_temperature_data, name='user_temperature_data'),
 path('offer-service/', views.offer_service, name='offer_service'),
 path('services/', views.service_list, name='service_list'),
 
