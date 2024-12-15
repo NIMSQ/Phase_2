@@ -10,9 +10,8 @@
             background-color: #f5f8fa;
             color: #333;
             margin: 0;
-            padding-top: 60px;
         }
-        /* Navbar styling */
+
         .navbar {
             background-color: #4285F4;
             color: white;
@@ -26,66 +25,42 @@
             width: 100%;
             z-index: 1000;
         }
+
         .navbar a {
             color: white;
             text-decoration: none;
             margin: 0 15px;
         }
+
         .navbar a:hover {
             text-decoration: underline;
         }
+
+        .map-container {
+            height: 350px;
+            width: 100%;
+        }
+
         .container {
             padding: 20px;
             max-width: 1200px;
             margin: auto;
         }
+
         .filter-section {
-            display: none;
             margin-bottom: 30px;
             padding: 20px;
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        .map-container {
-            height: 350px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-        .filter-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-        }
-        .filter-form label {
-            font-size: 14px;
-            font-weight: bold;
-        }
-        .filter-form input {
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            flex: 1;
-        }
-        .filter-button, .toggle-filters-button, .form-button {
-            padding: 10px 20px;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .filter-button:hover, .toggle-filters-button:hover, .form-button:hover {
-            background-color: #357AE8;
-        }
+
         .service-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
         }
+
         .service-item {
             background-color: #ffffff;
             border-radius: 12px;
@@ -95,23 +70,26 @@
             flex-direction: column;
             align-items: flex-start;
         }
+
         .service-title {
             font-size: 1.5rem;
-            {% comment %} color: #4285F4; {% endcomment %}
-            margin-bottom: 10px;
             font-weight: bold;
+            margin-bottom: 10px;
         }
+
         .service-description {
             font-size: 14px;
             color: #666;
             margin-bottom: 10px;
         }
+
         .service-price {
             font-size: 16px;
             font-weight: bold;
             color: #333;
             margin-bottom: 20px;
         }
+
         .subscribe-button {
             padding: 10px 20px;
             background-color: #4285F4;
@@ -122,30 +100,89 @@
             cursor: pointer;
             align-self: center;
         }
+
         .subscribe-button:hover {
             background-color: #357AE8;
         }
-        .subscribe-form {
-            display: none;
-            margin-top: 15px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            width: 100%;
+        .form-group {
+            margin-bottom: 15px;
         }
-        .subscribe-form label {
+        .form-group label {
             font-size: 14px;
-            margin-bottom: 5px;
             font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
         }
-        .subscribe-form input {
+        .form-group input {
             padding: 10px;
             font-size: 14px;
             border: 1px solid #ccc;
             border-radius: 8px;
             width: 100%;
+        }
+        .form-button {
+            padding: 10px 20px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            align-self: center;
+        }
+        .form-button:hover {
+            {% comment %} background-color: #45a049; {% endcomment %}
+        }
+
+
+        .filter-section {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .form-group {
             margin-bottom: 15px;
         }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .apply-filter-button {
+            padding: 10px 20px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .apply-filter-button:hover {
+            background-color: #4285F4;
+        }
+        .toggle-filters-button {
+            padding: 10px 20px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .toggle-filters-button:hover {
+            background-color: #357AE8;
+        }
+
     </style>
 </head>
 <body>
@@ -167,52 +204,97 @@
         </div>
     </div>
 
+    <!-- Map Section -->
+    <div class="map-container" id="map"></div>
+
+    <!-- Available Services Section -->
     <div class="container">
-        <button class="toggle-filters-button" onclick="toggleFilters()">Filters</button>
         
-        <div id="filter-section" class="filter-section">
-            <h2>Filter Services by Location and Price</h2>
-            <div id="map" class="map-container"></div>
-            <form method="GET" action="{% url 'sensor:service_list' %}" class="filter-form">
-                <input type="hidden" id="latitude" name="latitude" value="{{ request.GET.latitude }}">
-                <input type="hidden" id="longitude" name="longitude" value="{{ request.GET.longitude }}">
 
-                <label for="min_price">Min Price:</label>
-                <input type="number" name="min_price" id="min_price" placeholder="Min price" value="{{ request.GET.min_price }}">
-
-                <label for="max_price">Max Price:</label>
-                <input type="number" name="max_price" id="max_price" placeholder="Max price" value="{{ request.GET.max_price }}">
-
-                <button type="submit" class="filter-button">Apply Filter</button>
-            </form>
+        <div class="container">
+            <!-- Filter Section -->
+            <button class="toggle-filters-button" onclick="toggleFilters()">Filter</button>
+            <div id="filter-section" class="filter-section" style="display: none;">
+                <form method="GET" action="{% url 'sensor:service_list' %}" class="filter-form">
+                    <div class="form-group">
+                        <label for="min_price">Min Price:</label>
+                        <input 
+                            type="number" 
+                            name="min_price" 
+                            id="min_price" 
+                            placeholder="Enter minimum price" 
+                            value="{{ request.GET.min_price }}"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="max_price">Max Price:</label>
+                        <input 
+                            type="number" 
+                            name="max_price" 
+                            id="max_price" 
+                            placeholder="Enter maximum price" 
+                            value="{{ request.GET.max_price }}"
+                        >
+                    </div>
+                    <button type="submit" class="apply-filter-button">Apply Filter</button>
+                </form>
+            </div>
+            <h1>Available Services</h1>
         </div>
 
-        <h1>Available Services</h1>
+
         <div class="service-list">
             {% for service in services %}
             <div class="service-item">
                 <p class="service-title">{{ service.service_type }}</p>
                 <p class="service-description">{{ service.description }}</p>
-                <p class="service-price" id="service-price-{{ service.id }}">Price: ${{ service.price }}(for 1 Reading)</p>
+                <p class="service-price" id="service-price-{{ service.id }}">Price: ${{ service.price }} (for 1 reading)</p>
                 <button class="subscribe-button" onclick="toggleForm('{{ service.id }}')">Subscribe</button>
                 
-                <!-- Subscription Form -->
-                <div id="form-{{ service.id }}" class="subscribe-form">
+                <!-- Hidden Subscription Form -->
+                <div id="form-{{ service.id }}" class="subscribe-form" style="display: none;">
                     <form method="POST" action="{% url 'sensor:subscribe' service.id %}">
                         {% csrf_token %}
-                        <label for="subscription_duration">Number of Readings:</label>
-                        <input 
-                            type="number" 
-                            name="subscription_duration" 
-                            placeholder="Enter number of readings"
-                            id="readings-{{ service.id }}"
-                            min="1"
-                            onchange="updatePrice({{ service.id }}, {{ service.price }})"
-                        >
-        
-                        <label for="interval_between_readings">Interval between readings(e.g., 1 hour):</label>
-                        <input type="text" name="interval_between_readings" placeholder="Enter interval">
-        
+                        <div class="form-group">
+                            <label for="subscription_duration">Number of Readings:</label>
+                            <input 
+                                type="number" 
+                                name="subscription_duration" 
+                                id="readings-{{ service.id }}" 
+                                placeholder="Enter number of readings" 
+                                min="1" 
+                                onchange="updatePrice({{ service.id }}, {{ service.price }})"
+                                required
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label>Interval Between Readings:</label>
+                            <div style="display: flex; gap: 10px;">
+                                <div>
+                                    <label for="interval_hours">Hours:</label>
+                                    <input 
+                                        type="number" 
+                                        name="interval_hours" 
+                                        id="interval-hours-{{ service.id }}" 
+                                        placeholder="0" 
+                                        min="0" 
+                                        required
+                                    >
+                                </div>
+                                <div>
+                                    <label for="interval_minutes">Minutes:</label>
+                                    <input 
+                                        type="number" 
+                                        name="interval_minutes" 
+                                        id="interval-minutes-{{ service.id }}" 
+                                        placeholder="0" 
+                                        min="0" 
+                                        max="59" 
+                                        required
+                                    >
+                                </div>
+                            </div>
+                        </div>
                         <button type="submit" class="form-button">Confirm Subscription</button>
                     </form>
                 </div>
@@ -223,33 +305,53 @@
         {% if not services %}
         <p>No services available within the selected criteria.</p>
         {% endif %}
-        
-        <script>
-            function toggleForm(serviceId) {
-                const form = document.getElementById(`form-${serviceId}`);
-                form.style.display = form.style.display === "block" ? "none" : "block";
-            }
-        
-            function updatePrice(serviceId, pricePerReading) {
-                const readingsInput = document.getElementById(`readings-${serviceId}`);
-                const totalPriceElement = document.getElementById(`service-price-${serviceId}`);
-                const numberOfReadings = parseInt(readingsInput.value, 10);
-        
-                if (numberOfReadings >= 1) {
-                    const totalPrice = numberOfReadings * pricePerReading;
-                    totalPriceElement.textContent = `Price: $${totalPrice} (for ${numberOfReadings} readings)`;
-                } else {
-                    totalPriceElement.textContent = `Price: $${pricePerReading} (per one Read)`;
-                }
-            }
-        </script>
-        
+    </div>
 
     <script>
+
         function toggleForm(serviceId) {
             const form = document.getElementById(`form-${serviceId}`);
             form.style.display = form.style.display === "block" ? "none" : "block";
         }
+    
+        function updatePrice(serviceId, pricePerReading) {
+            const readingsInput = document.getElementById(`readings-${serviceId}`);
+            const totalPriceElement = document.getElementById(`service-price-${serviceId}`);
+            const numberOfReadings = parseInt(readingsInput.value, 10);
+    
+            if (numberOfReadings >= 1) {
+                const totalPrice = numberOfReadings * pricePerReading;
+                totalPriceElement.textContent = `Price: $${totalPrice} (for ${numberOfReadings} readings)`;
+            } else {
+                totalPriceElement.textContent = `Price: $${pricePerReading} (per one reading)`;
+            }
+        }
+
+        function initMap() {
+            const defaultLocation = { lat: 24.7136, lng: 46.6753 }; // Example location (Riyadh)
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultLocation,
+                zoom: 10,
+            });
+
+            const services = {{ serialized_services|safe }};
+            services.forEach(service => {
+                const marker = new google.maps.Marker({
+                    position: { lat: parseFloat(service.latitude), lng: parseFloat(service.longitude) },
+                    map: map,
+                    title: service.service_type,
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<div><strong>${service.service_type}</strong><br>${service.description}</div>`,
+                });
+
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+            });
+        }
+
 
         function toggleFilters() {
             const filterSection = document.getElementById("filter-section");
@@ -259,33 +361,8 @@
                 toggleButton.textContent = "Hide Filters";
             } else {
                 filterSection.style.display = "none";
-                toggleButton.textContent = "Filters";
+                toggleButton.textContent = "Filter";
             }
-        }
-
-        let map, marker;
-        function initMap() {
-            const defaultLocation = { lat: 24.7136, lng: 46.6753 }; // Riyadh
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: defaultLocation,
-                zoom: 10,
-            });
-
-            marker = new google.maps.Marker({
-                position: defaultLocation,
-                map: map,
-                draggable: true,
-            });
-
-            // Update hidden fields when the marker is moved
-            google.maps.event.addListener(marker, "dragend", function () {
-                document.getElementById("latitude").value = marker.getPosition().lat();
-                document.getElementById("longitude").value = marker.getPosition().lng();
-            });
-
-            // Set initial values
-            document.getElementById("latitude").value = defaultLocation.lat;
-            document.getElementById("longitude").value = defaultLocation.lng;
         }
     </script>
     <script async defer

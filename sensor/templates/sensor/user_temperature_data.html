@@ -8,6 +8,18 @@
     <h1>{{ subscription.service.service_type }}</h1>
     
 
+    <div class="filter-section">
+        <h2>Filter Data</h2>
+        <form method="GET" action="">
+            <label for="start_date">Start Date:</label>
+            <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+    
+            <label for="end_date">End Date:</label>
+            <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+    
+            <button type="submit" class="filter-button">Filter</button>
+        </form>
+    </div>
     <!-- Toggle Button -->
     <button id="toggle-view" class="toggle-button">Switch to Chart view</button>
     
@@ -44,18 +56,7 @@
     <div id="chart-view" style="display: none;">
         <canvas id="dataChart"></canvas>
     </div>
-    <div class="filter-section">
-        <h2>Filter Data</h2>
-        <form method="GET" action="">
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
-    
-            <label for="end_date">End Date:</label>
-            <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
-    
-            <button type="submit" class="filter-button">Filter</button>
-        </form>
-    </div>
+   
     
 
     <!-- Statistics Section -->

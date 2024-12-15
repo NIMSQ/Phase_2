@@ -13,8 +13,13 @@ from django.http import JsonResponse
 from django.http import HttpResponseForbidden
 import pandas as pd
 from math import radians, cos, sin, sqrt, atan2
-
-
+from django.core.serializers import serialize
+from django.shortcuts import render
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
+from .models import OfferedService
+#from . import haversine  # Assuming you have a haversine utility function
+import json
 def download_data(request):
    
 
@@ -55,39 +60,21 @@ def my_subscriptions(request):
 
 
 
-# def send_mqtt_notification(user_id, interval, duration, topic):
-#     """Sends an MQTT message to notify about a new subscription."""
-#     mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
-#     mqtt_port = 1883
-#     client = mqtt.Client()
-    
-#     # Attempt connection with logging
-#     try:
-#         print("Attempting to connect to MQTT broker...")
-#         client.connect(mqtt_broker, mqtt_port, 60)
-#         print("Connected to MQTT broker.")
-        
-#         # Construct the message
-#         message = f"You have a new subscriber with user ID {user_id}. Publish the data every {interval} for {duration} to this topic {topic}."
-#         print(f"Publishing message: {message}")
-        
-#         # Publish the message
-#         client.publish("sensor/subscriptions", message)
-#         print("Message published successfully.")
-        
-#     except Exception as e:
-#         print(f"Failed to send MQTT message: {e}")
-#     finally:
-#         # Disconnect after publishing
-#         client.disconnect()
-#         print("Disconnected from MQTT broker.")
         
 @login_required
 def subscribe(request, service_id):
     if request.method == 'POST':
+        # Number of Reading
         subscription_duration = request.POST.get('subscription_duration')
-        interval_between_readings = request.POST.get('interval_between_readings')
+        # interval_between_readings = request.POST.get('interval_between_readings')
         user = request.user
+        # Get interval values from the form
+        interval_hours = int(request.POST.get('interval_hours', 0))
+        interval_minutes = int(request.POST.get('interval_minutes', 0))
+
+        # Calculate total interval in Houre
+        interval_between_readings = interval_hours + (interval_minutes / 60)
+        
 
         service = get_object_or_404(OfferedService, id=service_id)
         
@@ -99,52 +86,17 @@ def subscribe(request, service_id):
             interval_between_readings=interval_between_readings
         )
 
-        # user_topic = f"sensor/{user.id}/data"
+     
         
-        # Send MQTT notification
-        # send_mqtt_notification(
-        #     user_id=user.id,
-        #     interval=interval_between_readings,
-        #     duration=subscription_duration,
-        #     topic=user_topic
-        # )
+        return redirect('sensor:my_subscriptions') 
 
-        # Add a success message for user feedback
-        # messages.success(request, "You have successfully subscribed to the service.")
-        
-        return redirect('sensor:my_subscriptions') #--> this line is the error 
-
-    print("Redirecting back to service list without subscribing.")
     return redirect('sensor:service_list')
 
 
-# def send_mqtt_edit_notification(topic, message):
-#     """Sends an MQTT message to notify about a subscription update."""
-#     mqtt_broker = "192.168.100.112"  # Update with your MQTT broker IP
-#     mqtt_port = 1883
-#     client = mqtt.Client()
-    
-#     try:
-#         print("Attempting to connect to MQTT broker...")
-#         client.connect(mqtt_broker, mqtt_port, 60)
-#         print("Connected to MQTT broker.")
-        
-#         # Log the topic and message
-#         print(f"Publishing to topic: {topic}")
-#         print(f"Message: {message}")
-        
-#         # Publish the message
-#         client.publish(topic, message)
-#         print("Message published successfully.")
-#     except Exception as e:
-#         print(f"Failed to send MQTT message: {e}")
-#     finally:
-#         # Disconnect after publishing
-#         client.disconnect()
-#         print("Disconnected from MQTT broker.")
+
 
 def edit_subscription(request, subscription_id):
-    """Allows the user to edit an existing subscription and notifies the service provider."""
+    
     subscription = get_object_or_404(Subscription, id=subscription_id, user=request.user)
 
     if request.method == 'POST':
@@ -157,18 +109,6 @@ def edit_subscription(request, subscription_id):
         subscription.interval_between_readings = request.POST.get('interval_between_readings')
         subscription.save()
 
-        # If the subscription details have changed, notify the service provider
-        if old_duration != subscription.subscription_duration or old_interval != subscription.interval_between_readings:
-            service_provider_topic = "sensor/subscriptions"
-            message = (
-                f"User {request.user.id} has updated their subscription:\n"
-                f"- Service: {subscription.service.service_type}\n"
-                f"- New Duration: {subscription.subscription_duration}\n"
-                f"- New Interval: {subscription.interval_between_readings}\n"
-                f"- please Publish the data to: sensor/{request.user.id}/data"
-            )
-            # Send the MQTT message to the service provider
-            # send_mqtt_edit_notification(topic=service_provider_topic, message=message)
 
         return redirect('sensor:my_subscriptions')
 
@@ -267,38 +207,38 @@ def offer_service(request):
 
 
 
-def haversine(lat1, lon1, lat2, lon2):
-    # Convert database Decimal values to float
-    lat2 = float(lat2)
-    lon2 = float(lon2)
+# def haversine(lat1, lon1, lat2, lon2):
+#     # Convert database Decimal values to float
+#     lat2 = float(lat2)
+#     lon2 = float(lon2)
     
-    # Calculate the great-circle distance between two points on the Earth
-    R = 6371  # Radius of the Earth in km
-    dlat = radians(lat2 - lat1)
-    dlon = radians(lon2 - lon1)
-    a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return R * c
+#     # Calculate the great-circle distance between two points on the Earth
+#     R = 6371  # Radius of the Earth in km
+#     dlat = radians(lat2 - lat1)
+#     dlon = radians(lon2 - lon1)
+#     a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
+#     c = 2 * atan2(sqrt(a), sqrt(1 - a))
+#     return R * c
 
 def service_list(request):
     services = OfferedService.objects.all()
-    latitude = request.GET.get("latitude")
-    longitude = request.GET.get("longitude")
+    # latitude = request.GET.get("latitude")
+    # longitude = request.GET.get("longitude")
     min_price = request.GET.get("min_price")
     max_price = request.GET.get("max_price")
-    radius = 10  # Default radius in km
+    # radius = 10  # Default radius in km
 
-    if latitude and longitude:
-        latitude = float(latitude)
-        longitude = float(longitude)
+    # if latitude and longitude:
+    #     latitude = float(latitude)
+    #     longitude = float(longitude)
 
-        # Filter by location
-        filtered_services = []
-        for service in services:
-            distance = haversine(latitude, longitude, service.latitude, service.longitude)
-            if distance <= radius:
-                filtered_services.append(service)
-        services = filtered_services
+        # # Filter by location
+        # filtered_services = []
+        # for service in services:
+        #     distance = haversine(latitude, longitude, service.latitude, service.longitude)
+        #     if distance <= radius:
+        #         filtered_services.append(service)
+        # services = filtered_services
 
     # Filter by price range
     if min_price:
@@ -306,4 +246,21 @@ def service_list(request):
     if max_price:
         services = [service for service in services if service.price <= float(max_price)]
 
-    return render(request, 'sensor/service_list.html', {'services': services})
+    # Serialize services for the map
+    serialized_services = json.dumps(
+        [
+            {
+                "id": service.id,
+                "service_type": service.service_type,
+                "description": service.description,
+                "price": service.price,
+                "latitude": service.latitude,
+                "longitude": service.longitude,
+            }
+            for service in services
+        ],
+        cls=DjangoJSONEncoder
+    )
+
+    # Pass both the original services and serialized JSON
+    return render(request, 'sensor/service_list.html', {'services': services, 'serialized_services': serialized_services})

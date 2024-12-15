@@ -8,7 +8,7 @@
     <form method="POST">
         {% csrf_token %}
         <div class="form-group">
-            <label for="subscription_duration">Subscription Duration</label>
+            <label for="subscription_duration">Number of Readings</label>
             <input type="text" id="subscription_duration" name="subscription_duration" value="{{ subscription.subscription_duration }}" required>
         </div>
         <div class="form-group">
